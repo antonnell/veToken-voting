@@ -1,0 +1,27 @@
+.gasSpeedContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.toggleButtonText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 0px;
+}
+
+.gasSpeed {
+  width: 100%;
+}
+
+.smallText {
+  font-size: 0.7rem !important;
+  font-weight: bold !important;
+  padding-top: 6px;
+}
+
+.title {
+  padding-left: 12px;
+  padding-bottom: 12px;
+}

@@ -1,0 +1,24 @@
+.container {
+  max-width: 100vw;
+  min-height: 100vh;
+  height: 100%;
+  width: 100%;
+  display: flex;
+}
+
+.content {
+  flex: 1;
+  min-height: 100vh;
+  height: 100%;
+}
+
+@media screen and (max-width: 1200px) {
+  .container {
+    flex-direction: column;
+  }
+  .content {
+    min-height: 100vh;
+    margin-left: 0px;
+    max-width: 100vw;
+  }
+}
