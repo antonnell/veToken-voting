@@ -33,7 +33,7 @@ function Balances({ project }) {
       <div className={classes.overviewCard}>
         <div>
           <Typography variant="h2">Total {project?.veTokenMetadata?.symbol}</Typography>
-          <Typography variant="h1">{!project ? <Skeleton style={{ minWidth: '200px ' }} /> : `$ ${formatCurrency(project?.totalVeTokenBalance, 0)}`}</Typography>
+          <Typography variant="h1">{!project ? <Skeleton style={{ minWidth: '200px ' }} /> : `$ ${formatCurrency(project?.veTokenMetadata?.totalSupply, 0)}`}</Typography>
         </div>
       </div>
     </Paper>

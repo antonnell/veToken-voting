@@ -12,7 +12,7 @@ export default function GaugeCalculator({ project }) {
   const [amountError, setAmountError] = useState(false);
   const [veAmount, setVeAmount] = useState(0);
   const [veAmountError, setVeAmountError] = useState(false);
-  const [vault, setVault] = useState(null);
+  const [gauge, setGauge] = useState(null);
 
   const setAmountPercent = (percent) => {
     if (!project || !project.tokenMetadata) {
@@ -22,11 +22,14 @@ export default function GaugeCalculator({ project }) {
     setAmount(BigNumber(project.tokenMetadata.balance).times(percent).div(100).toFixed(project.tokenMetadata.decimals));
   };
 
-  const onVaultSelectChanged = (event, theOption) => {
-    setVault(theOption);
+  const onGaugeSelectChanged = (event, theOption) => {
+    setGauge(theOption);
   };
 
   const onCalculate = () => {};
+
+
+  console.log(project)
 
   return (
     <Paper elevation={1} className={classes.projectCardContainer}>
@@ -36,21 +39,21 @@ export default function GaugeCalculator({ project }) {
         <div className={classes.inputTitleContainer}>
           <div className={classes.inputTitle}>
             <Typography variant="h5" noWrap>
-              Select Vault
+              Select Gauge
             </Typography>
           </div>
         </div>
         <Autocomplete
           disableClearable={true}
-          options={project?.vaults}
-          value={vault}
-          onChange={onVaultSelectChanged}
-          getOptionLabel={(option) => option.name}
+          options={project?.gauges}
+          value={gauge}
+          onChange={onGaugeSelectChanged}
+          getOptionLabel={(option) => option.lpToken.symbol}
           fullWidth={true}
           renderOption={(option, { selected }) => (
             <React.Fragment>
               <img src={option.logo} alt="" width={30} height={30} style={{ marginRight: '10px' }} />
-              <div className={classes.text}>{option.name}</div>
+              <div className={classes.text}>{option.lpToken.symbol}</div>
             </React.Fragment>
           )}
           renderInput={(params) => (
@@ -59,10 +62,10 @@ export default function GaugeCalculator({ project }) {
               InputProps={{
                 ...params.InputProps,
                 ...{
-                  placeholder: 'Search for vault',
-                  startAdornment: vault && (
+                  placeholder: 'Search for gauge',
+                  startAdornment: gauge && (
                     <InputAdornment position="start">
-                      <img src={vault?.logo} alt="" width={30} height={30} />
+                      <img src={gauge?.logo} alt="" width={30} height={30} />
                     </InputAdornment>
                   ),
                 },
@@ -157,7 +160,7 @@ export default function GaugeCalculator({ project }) {
       </div>
       <div className={ classes.calculationResults }>
         <div className={ classes.calculationResult}>
-          <Typography variant='h2'>Vault boost amount: </Typography>
+          <Typography variant='h2'>Gauge boost amount: </Typography>
           <Typography variant='h2' className={ classes.bold }></Typography>
         </div>
         <div className={ classes.calculationResult}>
@@ -165,7 +168,7 @@ export default function GaugeCalculator({ project }) {
           <Typography variant='h2' className={ classes.bold }></Typography>
         </div>
         <div className={ classes.calculationResult}>
-          <Typography variant='h2'>Vault APY: </Typography>
+          <Typography variant='h2'>Gauge APY: </Typography>
           <Typography variant='h2' className={ classes.bold }></Typography>
         </div>
       </div>

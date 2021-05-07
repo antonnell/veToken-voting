@@ -15,7 +15,7 @@ export default function GaugeVoting({ project }) {
   const [amountError, setAmountError] = useState(false);
   const [veAmount, setVeAmount] = useState(0);
   const [veAmountError, setVeAmountError] = useState(false);
-  const [vault, setVault] = useState(null);
+  const [gauge, setGauge] = useState(null);
 
   const setAmountPercent = (percent) => {
     if (!project || !project.tokenMetadata) {
@@ -25,8 +25,8 @@ export default function GaugeVoting({ project }) {
     setAmount(BigNumber(project.tokenMetadata.balance).times(percent).div(100).toFixed(project.tokenMetadata.decimals));
   };
 
-  const onVaultSelectChanged = (event, theOption) => {
-    setVault(theOption);
+  const onGaugeSelectChanged = (event, theOption) => {
+    setGauge(theOption);
   };
 
   const onCalculate = () => {};
@@ -35,26 +35,26 @@ export default function GaugeVoting({ project }) {
     <Paper elevation={1} className={classes.projectCardContainer}>
       <div className={ classes.split }>
         <div className={ classes.half }>
-          <Typography variant="h2">Vote for your vault</Typography>
+          <Typography variant="h2">Vote for your gauge</Typography>
           <div className={classes.textField}>
             <div className={classes.inputTitleContainer}>
               <div className={classes.inputTitle}>
                 <Typography variant="h5" noWrap>
-                  Select Vault
+                  Select Gauge
                 </Typography>
               </div>
             </div>
             <Autocomplete
               disableClearable={true}
-              options={project?.vaults}
-              value={vault}
-              onChange={onVaultSelectChanged}
-              getOptionLabel={(option) => option.name}
+              options={project?.gauges}
+              value={gauge}
+              onChange={onGaugeSelectChanged}
+              getOptionLabel={(option) => option.lpToken.symbol}
               fullWidth={true}
               renderOption={(option, { selected }) => (
                 <React.Fragment>
                   <img src={option.logo} alt="" width={30} height={30} style={{ marginRight: '10px' }} />
-                  <div className={classes.text}>{option.name}</div>
+                  <div className={classes.text}>{option.lpToken.symbol}</div>
                 </React.Fragment>
               )}
               renderInput={(params) => (
@@ -63,10 +63,10 @@ export default function GaugeVoting({ project }) {
                   InputProps={{
                     ...params.InputProps,
                     ...{
-                      placeholder: 'Search for vault',
-                      startAdornment: vault && (
+                      placeholder: 'Search for gauge',
+                      startAdornment: gauge && (
                         <InputAdornment position="start">
-                          <img src={vault?.logo} alt="" width={30} height={30} />
+                          <img src={gauge?.logo} alt="" width={30} height={30} />
                         </InputAdornment>
                       ),
                     },
@@ -110,7 +110,7 @@ export default function GaugeVoting({ project }) {
           </div>
           <div className={ classes.calculationResults }>
             <div className={ classes.calculationResult}>
-              <Typography variant='h2'>Vault boost amount: </Typography>
+              <Typography variant='h2'>Gauge boost amount: </Typography>
               <Typography variant='h2' className={ classes.bold }></Typography>
             </div>
             <div className={ classes.calculationResult}>
@@ -118,20 +118,18 @@ export default function GaugeVoting({ project }) {
               <Typography variant='h2' className={ classes.bold }></Typography>
             </div>
             <div className={ classes.calculationResult}>
-              <Typography variant='h2'>Vault APY: </Typography>
+              <Typography variant='h2'>Gauge APY: </Typography>
               <Typography variant='h2' className={ classes.bold }></Typography>
             </div>
           </div>
         </div>
         <div className={ classes.half }>
           <Typography variant="h2">Current Vote weighting</Typography>
-          <PieChart />
-          <Typography variant="h2">Proposed Vote weighting</Typography>
-          <PieChart />
+          <PieChart data={ project?.gauges?.sort((a, b) => a.relativeWeight > b.relativeWeight ? -1 : 1) } />
         </div>
       </div>
       <div>
-        <GaugeVotesTable vaults={ project ? project.vaults : null } />
+        {/* <GaugeVotesTable gauges={ project?.gauges } /> */}
       </div>
     </Paper>
   );

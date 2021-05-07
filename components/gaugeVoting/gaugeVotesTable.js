@@ -239,7 +239,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function EnhancedTable({ vaults }) {
+export default function EnhancedTable({ gauges }) {
   const classes = useStyles();
   const [order, setOrder] = React.useState('desc');
   const [orderBy, setOrderBy] = React.useState('balance');
@@ -252,7 +252,7 @@ export default function EnhancedTable({ vaults }) {
     setOrderBy(property);
   };
 
-  if (!vaults) {
+  if (!gauges) {
     return (
       <div className={classes.root}>
         <Skeleton variant="rect" width={'100%'} height={40} className={classes.skelly1} />
@@ -269,9 +269,9 @@ export default function EnhancedTable({ vaults }) {
     <div className={classes.root}>
       <TableContainer>
         <Table className={classes.table} aria-labelledby="tableTitle" size={'medium'} aria-label="enhanced table">
-          <EnhancedTableHead classes={classes} order={order} orderBy={orderBy} onRequestSort={handleRequestSort} rowCount={vaults.length} />
+          <EnhancedTableHead classes={classes} order={order} orderBy={orderBy} onRequestSort={handleRequestSort} rowCount={gauges.length} />
           <TableBody>
-            {stableSort(vaults, getComparator(order, orderBy)).map((row, index) => {
+            {stableSort(gauges, getComparator(order, orderBy)).map((row, index) => {
               if (!row) {
                 return null;
               }

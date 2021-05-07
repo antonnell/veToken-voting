@@ -9,7 +9,7 @@ import ProjectCard from '../../components/projectCard';
 import classes from './projects.module.css';
 
 import stores from '../../stores/index.js';
-import { ERROR, GET_PROJECTS, PROJECTS_RETURNED } from '../../stores/constants';
+import { ERROR, GET_PROJECTS, PROJECTS_RETURNED, GAUGES_CONFIGURED } from '../../stores/constants';
 
 import { formatCurrency, formatAddress } from '../../utils';
 
@@ -23,11 +23,17 @@ function Projects({ changeTheme }) {
       setProjects(projs);
     };
 
+    const gaugesReturned = (projs) => {
+      stores.dispatcher.dispatch({ type: GET_PROJECTS, content: {} });
+    };
+
     stores.emitter.on(PROJECTS_RETURNED, projectsReturned);
+    stores.emitter.on(GAUGES_CONFIGURED, gaugesReturned);
     stores.dispatcher.dispatch({ type: GET_PROJECTS, content: {} });
 
     return () => {
       stores.emitter.removeListener(PROJECTS_RETURNED, projectsReturned);
+      stores.emitter.removeListener(GAUGES_CONFIGURED, gaugesReturned);
     };
   }, []);
 

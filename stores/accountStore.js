@@ -7,7 +7,8 @@ import {
   CONFIGURE_RETURNED,
   ACCOUNT_CHANGED,
   GET_GAS_PRICES,
-  GAS_PRICES_RETURNED
+  GAS_PRICES_RETURNED,
+  CONFIGURE_GAUGES
 } from "./constants";
 
 import { ERC20ABI } from "./abis";
@@ -91,6 +92,7 @@ class Store {
               web3context: { library: { provider: a.provider } }
             });
             this.emitter.emit(CONFIGURE_RETURNED);
+            this.dispatcher.dispatch({ type: CONFIGURE_GAUGES });
           })
           .catch(e => {
             this.emitter.emit(ERROR, e);
@@ -121,6 +123,8 @@ class Store {
       });
       that.emitter.emit(ACCOUNT_CHANGED);
       that.emitter.emit(CONFIGURE_RETURNED);
+
+      that.dispatcher.dispatch({ type: CONFIGURE_GAUGES });
     });
   };
 
@@ -186,9 +190,13 @@ class Store {
     let web3context = this.getStore("web3context");
     let provider = null;
 
-    if (!web3context) {
-      provider = network.providers["1"];
-    } else {
+    // if (!web3context) {
+    //   provider = network.providers["1"];
+    // } else {
+    //   provider = web3context.library.provider;
+    // }
+
+    if(web3context && web3context.library) {
       provider = web3context.library.provider;
     }
 

@@ -10,8 +10,16 @@ import {
   GET_PROJECTS,
   PROJECTS_RETURNED,
   GET_PROJECT,
-  PROJECT_RETURNED
+  PROJECT_RETURNED,
+  GET_TOKEN_BALANCES,
+  TOKEN_BALANCES_RETURNED,
+  LOCK,
+  LOCK_RETURNED,
+  APPROVE_LOCK,
+  APPROVE_LOCK_RETURNED,
 } from './constants';
+
+import { ERC20_ABI, GAUGE_CONTROLLER_ABI, GAUGE_ABI, VOTING_ESCROW_ABI } from './abis';
 
 import * as moment from 'moment';
 
@@ -30,88 +38,17 @@ class Store {
     this.store = {
       projects: [
         {
-          id: 'yearn',
-          name: 'Yearn',
-          logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png',
-          url: 'yearn.finance',
-          gaugeProxyAddress: '',
-          tokenMetadata: {
-            address: '0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e',
-            symbol: 'YFI',
-            decimals: 18,
-            logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-          },
-          veTokenMetadata: {
-            address: '0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e',
-            symbol: 'veYFI',
-            decimals: 18,
-            logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-          },
-          vaults: [
-            {
-              address: 'addy',
-              name: 'Farm 1',
-              logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-            },
-            {
-              address: 'addy',
-              name: 'Farm 2',
-              logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-            },
-            {
-              address: 'addy',
-              name: 'Farm 3',
-              logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-            },
-            {
-              address: 'addy',
-              name: 'Farm 4',
-              logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-            }
-          ]
+          id: 'curve',
+          name: 'curve.fi',
+          logo: 'https://dao.curve.fi/logo_optimized.svg',
+          url: 'curve.fi',
+          gaugeProxyAddress: '0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB',
+          gauges: [],
+          vaults: [],
+          tokenMetadata: {},
+          veTokenMetadata: {},
         },
-        {
-          id: 'spirit',
-          name: 'Spirit Swap',
-          logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png',
-          url: 'spiritswap.finance',
-          gaugeProxyAddress: '',
-          tokenMetadata: {
-            address: '0x5cc61a78f164885776aa610fb0fe1257df78e59b',
-            symbol: 'spirit',
-            decimals: 18,
-            logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-          },
-          veTokenMetadata: {
-            address: '0x5cc61a78f164885776aa610fb0fe1257df78e59b',
-            symbol: 'veSpirit',
-            decimals: 18,
-            logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-          },
-          vaults: [
-            {
-              address: 'addy',
-              name: 'Farm 1',
-              logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-            },
-            {
-              address: 'addy',
-              name: 'Farm 2',
-              logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-            },
-            {
-              address: 'addy',
-              name: 'Farm 3',
-              logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-            },
-            {
-              address: 'addy',
-              name: 'Farm 4',
-              logo: 'https://raw.githubusercontent.com/trustwallet/assets/master/dapps/yearn.finance.png'
-            }
-          ]
-        }
-      ]
+      ],
     };
 
     dispatcher.register(
@@ -125,6 +62,15 @@ class Store {
             break;
           case GET_PROJECT:
             this.getProject(payload);
+            break;
+          case GET_TOKEN_BALANCES:
+            this.getTokenBalances(payload);
+            break;
+          case LOCK:
+            this.lock(payload);
+            break;
+          case APPROVE_LOCK:
+            this.approveLock(payload);
             break;
           default: {
           }
@@ -149,7 +95,146 @@ class Store {
       return null;
     }
 
-    this.emitter.emit(GAUGES_CONFIGURED)
+    const projects = this.getStore('projects');
+
+    async.map(
+      projects,
+      (project, callback) => {
+        this._getProjectData(project, callback);
+      },
+      (err, data) => {
+        if (err) {
+          this.emitter.emit(ERROR);
+          return;
+        }
+
+        this.setStore({ projects: data });
+
+        this.emitter.emit(GAUGES_CONFIGURED);
+      },
+    );
+  };
+
+  _getProjectData = async (project, callback) => {
+    const web3 = await stores.accountStore.getWeb3Provider();
+    if (!web3) {
+      return null;
+    }
+
+    const gaugeControllerContract = new web3.eth.Contract(GAUGE_CONTROLLER_ABI, project.gaugeProxyAddress);
+
+    // get how many gauges there are
+    const n_gauges = await gaugeControllerContract.methods.n_gauges().call();
+    const tmpArr = [...Array(parseInt(n_gauges)).keys()];
+
+    // get all the gauges
+    const gaugesPromises = tmpArr.map((gauge, idx) => {
+      return new Promise((resolve, reject) => {
+        resolve(gaugeControllerContract.methods.gauges(idx).call());
+      });
+    });
+
+    const gauges = await Promise.all(gaugesPromises);
+
+    // get the gauge relative weights
+    const gaugesRelativeWeightsPromise = gauges.map((gauge) => {
+      return new Promise((resolve, reject) => {
+        resolve(gaugeControllerContract.methods.gauge_relative_weight(gauge).call());
+      });
+    });
+
+    const gaugesRelativeWeights = await Promise.all(gaugesRelativeWeightsPromise);
+
+    // get the gauge weights
+    const gaugesWeightsPromise = gauges.map((gauge) => {
+      return new Promise((resolve, reject) => {
+        resolve(gaugeControllerContract.methods.get_gauge_weight(gauge).call());
+      });
+    });
+
+    const gaugesWeights = await Promise.all(gaugesWeightsPromise);
+
+    // get the gauge lp token
+    const gaugesLPTokensPromise = gauges.map((gauge) => {
+      return new Promise((resolve, reject) => {
+        const gaugeContract = new web3.eth.Contract(GAUGE_ABI, gauge);
+
+        resolve(gaugeContract.methods.lp_token().call());
+      });
+    });
+
+    const gaugesLPTokens = await Promise.all(gaugesLPTokensPromise);
+
+    // get LP token info
+    const lpTokensPromise = gaugesLPTokens
+      .map((lpToken) => {
+        const lpTokenContract = new web3.eth.Contract(ERC20_ABI, lpToken);
+
+        const promises = [];
+        const namePromise = new Promise((resolve, reject) => {
+          resolve(lpTokenContract.methods.name().call());
+        });
+        const symbolPromise = new Promise((resolve, reject) => {
+          resolve(lpTokenContract.methods.symbol().call());
+        });
+        const decimalsPromise = new Promise((resolve, reject) => {
+          resolve(lpTokenContract.methods.decimals().call());
+        });
+
+        promises.push(namePromise);
+        promises.push(symbolPromise);
+        promises.push(decimalsPromise);
+
+        return promises;
+      })
+      .flat();
+
+    const lpTokens = await Promise.all(lpTokensPromise);
+
+    let projectGauges = [];
+    for (let i = 0; i < gauges.length; i++) {
+      const gauge = {
+        address: gauges[i],
+        weight: parseInt(gaugesWeights[i]),
+        relativeWeight: parseInt(gaugesRelativeWeights[i]),
+        lpToken: {
+          name: lpTokens[i * 3],
+          symbol: lpTokens[i * 3 + 1],
+          decimals: lpTokens[i * 3 + 2],
+        },
+      };
+
+      projectGauges.push(gauge);
+    }
+
+    const totalWeight = await gaugeControllerContract.methods.get_total_weight().call();
+
+    const tokenAddress = await gaugeControllerContract.methods.token().call();
+    const tokenContract = new web3.eth.Contract(ERC20_ABI, tokenAddress);
+
+    const veTokenAddress = await gaugeControllerContract.methods.voting_escrow().call();
+    const veTokenContract = new web3.eth.Contract(ERC20_ABI, veTokenAddress);
+
+    const projectTokenMetadata = {
+      address: web3.utils.toChecksumAddress(tokenAddress),
+      symbol: await tokenContract.methods.symbol().call(),
+      decimals: parseInt(await tokenContract.methods.decimals().call()),
+      logo: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${web3.utils.toChecksumAddress(tokenAddress)}/logo.png`,
+    };
+
+    const projectVeTokenMetadata = {
+      address: web3.utils.toChecksumAddress(veTokenAddress),
+      symbol: await veTokenContract.methods.symbol().call(),
+      decimals: parseInt(await veTokenContract.methods.decimals().call()),
+      logo: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${web3.utils.toChecksumAddress(veTokenAddress)}/logo.png`,
+    };
+
+    project.totalWeight = totalWeight;
+    project.tokenMetadata = projectTokenMetadata;
+    project.veTokenMetadata = projectVeTokenMetadata;
+    project.gauges = projectGauges;
+
+    callback(null, project);
   };
 
   getProjects = async (payload) => {
@@ -158,10 +243,10 @@ class Store {
       return null;
     }
 
-    const projects = await this._getProjects()
+    const projects = await this._getProjects();
 
-    this.emitter.emit(PROJECTS_RETURNED, projects)
-  }
+    this.emitter.emit(PROJECTS_RETURNED, projects);
+  };
 
   _getProjects = async () => {
     // ...
@@ -169,11 +254,9 @@ class Store {
     // get project info
     // store them into the storage
 
-
     // for now just return stored projects
-    return this.getStore('projects')
-
-  }
+    return this.getStore('projects');
+  };
 
   getProject = async (payload) => {
     const web3 = await stores.accountStore.getWeb3Provider();
@@ -181,25 +264,156 @@ class Store {
       return null;
     }
 
-    console.log(payload)
+    const projects = await this._getProjects();
 
-    const projects = await this._getProjects()
-
-    console.log(projects)
     let project = projects.filter((project) => {
-      return project.id === payload.content.id
-    })
+      return project.id === payload.content.id;
+    });
 
-    console.log(project)
-
-    if(project.length > 0) {
-      project = project[0]
+    if (project.length > 0) {
+      project = project[0];
     }
 
-    this.emitter.emit(PROJECT_RETURNED, project)
-  }
+    this.emitter.emit(PROJECT_RETURNED, project);
+  };
 
-  _callContract = (web3, contract, method, params, account, gasPrice, dispatchEvent, callback) => {
+  getTokenBalances = async (payload) => {
+    const web3 = await stores.accountStore.getWeb3Provider();
+    if (!web3) {
+      return null;
+    }
+
+    const account = stores.accountStore.getStore('account');
+    if (!account || !account.address) {
+      return null;
+    }
+
+    const projects = await this._getProjects();
+
+    let project = projects.filter((project) => {
+      return project.id === payload.content.id;
+    });
+
+    if (project.length > 0) {
+      project = project[0];
+    }
+
+    const tokenContract = new web3.eth.Contract(ERC20_ABI, project.tokenMetadata.address);
+    const tokenBalance = await tokenContract.methods.balanceOf(account.address).call();
+    const allowance = await tokenContract.methods.allowance(account.address, project.veTokenMetadata.address).call();
+    const totalLocked = await tokenContract.methods.balanceOf(project.veTokenMetadata.address).call();
+
+    const veTokenContract = new web3.eth.Contract(ERC20_ABI, project.veTokenMetadata.address);
+    const veTokenBalance = await veTokenContract.methods.balanceOf(account.address).call();
+    const totalSupply = await veTokenContract.methods.totalSupply().call();
+
+    project.tokenMetadata.balance = BigNumber(tokenBalance)
+      .div(10 ** project.tokenMetadata.decimals)
+      .toFixed(project.tokenMetadata.decimals);
+    project.tokenMetadata.allowance = BigNumber(allowance)
+      .div(10 ** project.tokenMetadata.decimals)
+      .toFixed(project.tokenMetadata.decimals);
+    project.tokenMetadata.totalLocked = BigNumber(totalLocked)
+      .div(10 ** project.tokenMetadata.decimals)
+      .toFixed(project.tokenMetadata.decimals);
+    project.veTokenMetadata.balance = BigNumber(veTokenBalance)
+      .div(10 ** project.veTokenMetadata.decimals)
+      .toFixed(project.veTokenMetadata.decimals);
+    project.veTokenMetadata.totalSupply = BigNumber(totalSupply)
+      .div(10 ** project.veTokenMetadata.decimals)
+      .toFixed(project.veTokenMetadata.decimals);
+
+    let newProjects = projects.map((proj) => {
+      if (proj.id === project.id) {
+        return project;
+      }
+
+      return proj;
+    });
+
+    this.setStore({ projects: newProjects });
+
+    this.emitter.emit(TOKEN_BALANCES_RETURNED, project);
+  };
+
+  approveLock = async (payload) => {
+    const account = stores.accountStore.getStore('account');
+    if (!account) {
+      return false;
+      //maybe throw an error
+    }
+
+    const web3 = await stores.accountStore.getWeb3Provider();
+    if (!web3) {
+      return false;
+      //maybe throw an error
+    }
+
+    const { amount, project } = payload.content;
+
+    this._callApproveLock(web3, project, account, amount, (err, approveResult) => {
+      if (err) {
+        return this.emitter.emit(ERROR, err);
+      }
+
+      return this.emitter.emit(APPROVE_LOCK_RETURNED, approveResult);
+    });
+  };
+
+  _callApproveLock = async (web3, project, account, amount, callback) => {
+    const tokenContract = new web3.eth.Contract(ERC20_ABI, project.tokenMetadata.address);
+
+    let amountToSend = '0';
+    if (amount === 'max') {
+      amountToSend = MAX_UINT256;
+    } else {
+      amountToSend = BigNumber(amount)
+        .times(10 ** project.tokenMetadata.decimals)
+        .toFixed(0);
+    }
+
+    const gasPrice = await stores.accountStore.getGasPrice('fast');
+
+    this._callContractWait(web3, tokenContract, 'approve', [project.veTokenMetadata.address, amountToSend], account, gasPrice, GET_TOKEN_BALANCES, { id: project.id }, callback);
+  };
+
+  lock = async (payload) => {
+    const account = stores.accountStore.getStore('account');
+    if (!account) {
+      return false;
+      //maybe throw an error
+    }
+
+    const web3 = await stores.accountStore.getWeb3Provider();
+    if (!web3) {
+      return false;
+      //maybe throw an error
+    }
+
+    const { amount, selectedDate, project } = payload.content;
+
+    this._callLock(web3, project, account, amount, selectedDate, (err, lockResult) => {
+      if (err) {
+        return this.emitter.emit(ERROR, err);
+      }
+
+      return this.emitter.emit(LOCK_RETURNED, lockResult);
+    });
+  };
+
+  _callLock = async (web3, project, account, amount, selectedDate, callback) => {
+    const escrowContract = new web3.eth.Contract(VOTING_ESCROW_ABI, project.veTokenMetadata.address);
+
+    const amountToSend = BigNumber(amount)
+      .times(10 ** project.tokenMetadata.decimals)
+      .toFixed(0);
+
+    const gasPrice = await stores.accountStore.getGasPrice('fast');
+
+    this._callContractWait(web3, escrowContract, 'create_lock', [amountToSend, selectedDate], account, gasPrice, GET_TOKEN_BALANCES, { id: project.id }, callback);
+  };
+
+  _callContract = (web3, contract, method, params, account, gasPrice, dispatchEvent, dispatchEventPayload, callback) => {
     const context = this;
     contract.methods[method](...params)
       .send({
@@ -211,10 +425,63 @@ class Store {
         callback(null, hash);
       })
       .on('confirmation', function (confirmationNumber, receipt) {
-        if (dispatchEvent && confirmationNumber === 1) {
-          context.dispatcher.dispatch({ type: dispatchEvent });
+        console.log(receipt)
+        console.log(confirmationNumber)
+        if (dispatchEvent && confirmationNumber == 0) {
+          context.dispatcher.dispatch({ type: dispatchEvent, content: dispatchEventPayload });
         }
       })
+      .on('error', function (error) {
+        if (!error.toString().includes('-32601')) {
+          if (error.message) {
+            return callback(error.message);
+          }
+          callback(error);
+        }
+      })
+      .catch((error) => {
+        if (!error.toString().includes('-32601')) {
+          if (error.message) {
+            return callback(error.message);
+          }
+          callback(error);
+        }
+      });
+  };
+
+  _callContractWait = (web3, contract, method, params, account, gasPrice, dispatchEvent, dispatchEventPayload, callback) => {
+    const context = this;
+    contract.methods[method](...params)
+      .send({
+        from: account.address,
+        gasPrice: web3.utils.toWei(gasPrice, 'gwei'),
+      })
+      .on('transactionHash', function (hash) {
+        context.emitter.emit(TX_SUBMITTED, hash);
+      })
+      .on('receipt', function (receipt) {
+        console.log(receipt)
+        callback(null, receipt.transactionHash);
+
+        if (dispatchEvent) {
+          console.log('dispatching new event')
+          console.log(dispatchEvent)
+          console.log(dispatchEventPayload)
+          context.dispatcher.dispatch({ type: dispatchEvent, content: dispatchEventPayload });
+        }
+      })
+      // .on('confirmation', function (confirmationNumber, receipt) {
+      //   console.log(receipt)
+      //   console.log(confirmationNumber)
+      //   if(confirmationNumber === 0) {
+      //     callback(null, hash);
+      //
+      //     if (dispatchEvent) {
+      //       context.dispatcher.dispatch({ type: dispatchEvent, content: dispatchEventPayload });
+      //     }
+      //   }
+      //
+      // })
       .on('error', function (error) {
         if (!error.toString().includes('-32601')) {
           if (error.message) {
