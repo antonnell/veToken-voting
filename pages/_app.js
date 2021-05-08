@@ -5,6 +5,8 @@ import { ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { useRouter } from 'next/router';
 
+import '../styles/global.css'
+
 import lightTheme from '../theme/light';
 import darkTheme from '../theme/dark';
 
@@ -58,7 +60,7 @@ export default function MyApp({ Component, pageProps }) {
   return (
     <React.Fragment>
       <Head>
-        <title>Yearn</title>
+        <title>veToken</title>
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
       <ThemeProvider theme={themeConfig}>

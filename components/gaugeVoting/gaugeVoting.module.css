@@ -40,9 +40,10 @@
 }
 
 .calculationResults {
-  padding-top: 24px;
   display: flex;
   flex-direction: column;
+  padding: 12px;
+  padding-top: 48px;
 }
 
 .calculationResult {
@@ -61,6 +62,15 @@
   grid-template-columns: repeat(2, 1fr);
   grid-gap: 48px;
   box-sizing: border-box;
+}
+
+.gaugeVotesTable {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(128,128,128,0.5);
+  padding: 12px;
+  border-radius: 10px;
+  width: 100%;
 }
 
 @media screen and (max-width: 1440px) {

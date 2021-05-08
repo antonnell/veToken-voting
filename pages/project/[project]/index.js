@@ -9,6 +9,7 @@ import Balances from '../../../components/balances';
 import GaugeCalculator from '../../../components/gaugeCalculator';
 import VeAssetGeneration from '../../../components/veAssetGeneration';
 import GaugeVoting from '../../../components/gaugeVoting';
+import Header from '../../../components/header';
 
 import classes from './project.module.css';
 
@@ -68,6 +69,7 @@ function Projects({ changeTheme }) {
 
   return (
     <Layout changeTheme={changeTheme} backClicked={backClicked}>
+      <Header changeTheme={changeTheme} backClicked={backClicked} />
       <div className={classes.projectContainer}>
         <Balances project={project} />
         <div className={classes.projectCardContainer}>

@@ -16,8 +16,8 @@ function Balances({ project }) {
     <Paper elevation={1} className={classes.overviewContainer}>
       <div className={classes.overviewCard}>
         <div>
-          <Typography variant="h2">{project?.tokenMetadata?.symbol} balance</Typography>
-          <Typography variant="h1">
+          <Typography variant="h5">{project?.tokenMetadata?.symbol} balance</Typography>
+          <Typography variant="h2">
             {!project?.tokenMetadata?.balance ? <Skeleton style={{ minWidth: '200px ' }} /> : `$ ${formatCurrency(project?.tokenMetadata?.balance, 4)}`}
           </Typography>
         </div>
@@ -25,15 +25,15 @@ function Balances({ project }) {
       <div className={classes.separator}></div>
       <div className={classes.overviewCard}>
         <div>
-          <Typography variant="h2">{project?.veTokenMetadata?.symbol} balance</Typography>
-          <Typography variant="h1">{!project?.veTokenMetadata?.balance ? <Skeleton style={{ minWidth: '200px ' }} /> : `$ ${formatCurrency(project?.veTokenMetadata?.balance, 4)}`}</Typography>
+          <Typography variant="h5">{project?.veTokenMetadata?.symbol} balance</Typography>
+          <Typography variant="h2">{!project?.veTokenMetadata?.balance ? <Skeleton style={{ minWidth: '200px ' }} /> : `$ ${formatCurrency(project?.veTokenMetadata?.balance, 4)}`}</Typography>
         </div>
       </div>
       <div className={classes.separator}></div>
       <div className={classes.overviewCard}>
         <div>
-          <Typography variant="h2">Total {project?.veTokenMetadata?.symbol}</Typography>
-          <Typography variant="h1">{!project ? <Skeleton style={{ minWidth: '200px ' }} /> : `$ ${formatCurrency(project?.veTokenMetadata?.totalSupply, 0)}`}</Typography>
+          <Typography variant="h5">Total {project?.veTokenMetadata?.symbol}</Typography>
+          <Typography variant="h2">{!project ? <Skeleton style={{ minWidth: '200px ' }} /> : `$ ${formatCurrency(project?.veTokenMetadata?.totalSupply, 0)}`}</Typography>
         </div>
       </div>
     </Paper>

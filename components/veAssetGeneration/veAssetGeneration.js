@@ -227,12 +227,12 @@ export default function VeAssetGeneration(props) {
           <Typography variant="h5">{lockLoading ? <CircularProgress size={15} /> : `Lock ${project?.tokenMetadata?.symbol}`}</Typography>
         </Button>
       </div>
-      <div className={classes.calculationResults}>
+      {/*<div className={classes.calculationResults}>
         <div className={classes.calculationResult}>
           <Typography variant="h2">You will receive: </Typography>
           <Typography variant="h2" className={classes.bold}></Typography>
         </div>
-      </div>
+      </div>*/}
     </Paper>
   );
 }

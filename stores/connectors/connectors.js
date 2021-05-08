@@ -32,7 +32,7 @@ export const walletconnect = new WalletConnectConnector({
 
 export const walletlink = new WalletLinkConnector({
   url: RPC_URLS[1],
-  appName: "yearn.finance"
+  appName: "veToken"
 });
 
 export const fortmatic = new FortmaticConnector({

@@ -17,6 +17,8 @@ import {
   LOCK_RETURNED,
   APPROVE_LOCK,
   APPROVE_LOCK_RETURNED,
+  VOTE,
+  VOTE_RETURNED
 } from './constants';
 
 import { ERC20_ABI, GAUGE_CONTROLLER_ABI, GAUGE_ABI, VOTING_ESCROW_ABI } from './abis';
@@ -39,8 +41,8 @@ class Store {
       projects: [
         {
           id: 'curve',
-          name: 'curve.fi',
-          logo: 'https://dao.curve.fi/logo_optimized.svg',
+          name: 'curve',
+          logo: 'https://assets.coingecko.com/coins/images/12124/large/Curve.png',
           url: 'curve.fi',
           gaugeProxyAddress: '0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB',
           gauges: [],
@@ -71,6 +73,9 @@ class Store {
             break;
           case APPROVE_LOCK:
             this.approveLock(payload);
+            break;
+          case VOTE:
+            this.vote(payload);
             break;
           default: {
           }
@@ -323,6 +328,28 @@ class Store {
       .div(10 ** project.veTokenMetadata.decimals)
       .toFixed(project.veTokenMetadata.decimals);
 
+
+    // get the gauge vote weights for the user
+    const gaugeControllerContract = new web3.eth.Contract(GAUGE_CONTROLLER_ABI, project.gaugeProxyAddress);
+
+    const gaugesVoteWeightsPromise = project.gauges.map((gauge) => {
+      return new Promise((resolve, reject) => {
+        resolve(gaugeControllerContract.methods.vote_user_slopes(account.address, gauge.address).call());
+      });
+    });
+
+    const voteWeights = await Promise.all(gaugesVoteWeightsPromise);
+
+    let totalPercentUsed = 0
+
+    for (let i = 0; i < project.gauges.length; i++) {
+      const gaugeVotePercent = BigNumber(voteWeights[i].power).div(100)
+      project.gauges[i].userVotesPercent = gaugeVotePercent.toFixed(2)
+      totalPercentUsed = BigNumber(totalPercentUsed).plus(gaugeVotePercent)
+    }
+
+    project.userVotesPercent = totalPercentUsed.toFixed(2)
+
     let newProjects = projects.map((proj) => {
       if (proj.id === project.id) {
         return project;
@@ -411,6 +438,46 @@ class Store {
     const gasPrice = await stores.accountStore.getGasPrice('fast');
 
     this._callContractWait(web3, escrowContract, 'create_lock', [amountToSend, selectedDate], account, gasPrice, GET_TOKEN_BALANCES, { id: project.id }, callback);
+  };
+
+  vote = async (payload) => {
+    const account = stores.accountStore.getStore('account');
+    if (!account) {
+      return false;
+      //maybe throw an error
+    }
+
+    const web3 = await stores.accountStore.getWeb3Provider();
+    if (!web3) {
+      return false;
+      //maybe throw an error
+    }
+
+    const { amount, gaugeAddress, project } = payload.content;
+
+    this._calVoteForGaugeWeights(web3, project, account, amount, gaugeAddress, (err, voteResult) => {
+      if (err) {
+        return this.emitter.emit(ERROR, err);
+      }
+
+      return this.emitter.emit(VOTE_RETURNED, voteResult);
+    });
+  };
+
+  _calVoteForGaugeWeights = async (web3, project, account, amount, gaugeAddress, callback) => {
+    const gaugeControllerContract = new web3.eth.Contract(GAUGE_CONTROLLER_ABI, project.gaugeProxyAddress);
+
+    const amountToSend = BigNumber(amount)
+      .times(100)
+      .toFixed(0);
+
+    const gasPrice = await stores.accountStore.getGasPrice('fast');
+
+    console.log(gaugeControllerContract)
+    console.log('vote_for_gauge_weights')
+    console.log([gaugeAddress, amountToSend])
+
+    this._callContractWait(web3, gaugeControllerContract, 'vote_for_gauge_weights', [gaugeAddress, amountToSend], account, gasPrice, GET_TOKEN_BALANCES, { id: project.id }, callback);
   };
 
   _callContract = (web3, contract, method, params, account, gasPrice, dispatchEvent, dispatchEventPayload, callback) => {

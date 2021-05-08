@@ -51,4 +51,7 @@ export const APPROVE_LOCK_RETURNED = 'APPROVE_LOCK_RETURNED'
 export const LOCK = 'LOCK'
 export const LOCK_RETURNED = 'LOCK_RETURNED'
 
+export const VOTE = 'VOTE'
+export const VOTE_RETURNED = 'VOTE_RETURNED'
+
 export const MAX_UINT256 = new BigNumber(2).pow(256).minus(1).toFixed(0);

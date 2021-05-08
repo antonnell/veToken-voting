@@ -2,7 +2,7 @@
   width: 100%;
   border-radius: 10px;
   cursor: pointer;
-  min-height: 223px;
+  min-height: 200px;
 }
 
 .projectCardTitle {
@@ -14,8 +14,7 @@
 }
 
 .projectCardLogo {
-  width: 100;
-  height: 100;
+  height: 70px;
   border-radius: 25px;
 }
 

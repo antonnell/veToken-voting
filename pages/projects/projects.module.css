@@ -1,11 +1,109 @@
-.projectsContainer {
-  padding: 0 36px;
-  width: 100%;
+.container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-gap: 48px;
+  grid-template-columns: 700px 1fr;
+  position: relative;
   box-sizing: border-box;
 }
+
+.containerDark {
+  display: grid;
+  grid-template-columns: 700px 1fr;
+  position: relative;
+  box-sizing: border-box;
+  background: #2b2e3c;
+}
+
+.copyCentered {
+  width: 425px;
+}
+
+.copyContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: sticky;
+  top: 10rem;
+  height: fit-content;
+  justify-content: center;
+  top: 16rem;
+  align-items: center;
+}
+
+.headerContainer {
+  width: 100%;
+  padding-bottom: 24px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(#f3f3f3 90%, transparent 100%);
+  z-index: 1;
+}
+
+.headerContainerDark {
+  width: 100%;
+  padding-bottom: 24px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(#23252e 90%, transparent 100%);
+  z-index: 1;
+}
+
+.listContainer {
+  min-height: 100vh;
+  width: 100%;
+  align-items: flex-start;
+  padding: 0px 24px;
+}
+
+.listContainerDark {
+  min-height: 100vh;
+  width: 100%;
+  align-items: flex-start;
+  background: #23252e;
+  padding: 0px 24px;
+}
+
+.cardsContainer {
+  padding: 0px 80px;
+  display: grid;
+  grid-template-columns: calc(33% - 15px) calc(33% - 15px) calc(33% - 15px);
+  gap: 30px;
+  max-width: 1400px;
+}
+
+.chainListSpacing {
+  margin-bottom: 21px !important;
+}
+
+.helpingUnderline {
+  color: #2f80ed;
+}
+
+.helpingParagraph {
+  margin-bottom: 30px !important;
+  max-width: 390px;
+}
+
+.socials {
+  position: fixed;
+  bottom: 48px;
+  width: 425px;
+}
+
+.socialButton {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.sourceCode {
+  padding-left: 6px;
+  text-decoration: none;
+}
+
+.version {
+  padding-left: 30px;
+}
+
 
 @media screen and (max-width: 1600px) {
   .projectsContainer {
