@@ -8,8 +8,8 @@ const theme = createMuiTheme({
   palette: {
     ...coreTheme.palette,
     background: {
-      default: "#fff",
-      paper: "#F8F9FE"
+      default: "#f3f3f3",
+      paper: "#FFFFFF"
     },
     accountButton: {
       default: "#EFEFEF"

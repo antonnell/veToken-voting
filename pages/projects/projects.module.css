@@ -3,6 +3,7 @@
   grid-template-columns: 700px 1fr;
   position: relative;
   box-sizing: border-box;
+  background: #FFF;
 }
 
 .containerDark {
@@ -52,6 +53,7 @@
   width: 100%;
   align-items: flex-start;
   padding: 0px 24px;
+  background: #f3f3f3;
 }
 
 .listContainerDark {

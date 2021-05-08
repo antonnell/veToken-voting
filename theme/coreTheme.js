@@ -95,6 +95,13 @@ const coreTheme = {
     }
   },
   overrides: {
+    MuiPaper: {
+      elevation1: {
+        "box-shadow": '0px 7px 7px #0000000A;',
+        "-webkit-box-shadow": '0px 7px 7px #0000000A;',
+        "-moz-box-shadow": '0px 7px 7px #0000000A;',
+      }
+    },
     MuiButton: {
       root: {
         minWidth: "50px"
