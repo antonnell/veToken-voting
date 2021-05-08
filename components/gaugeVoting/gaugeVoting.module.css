@@ -64,6 +64,10 @@
   box-sizing: border-box;
 }
 
+.sectionHeader {
+  padding-bottom: 24px;
+}
+
 .gaugeVotesTable {
   display: flex;
   flex-direction: column;
@@ -73,12 +77,10 @@
   width: 100%;
 }
 
-@media screen and (max-width: 1440px) {
-
-}
-
 @media screen and (max-width: 1000px) {
-
+  .split {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media screen and (max-width: 600px) {

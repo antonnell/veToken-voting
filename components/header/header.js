@@ -40,7 +40,7 @@ const StyledSwitch = withStyles((theme) => ({
     '&$focusVisible $thumb': {
       color: '#ffffff',
       border: '6px solid #fff',
-    },
+    }
   },
   thumb: {
     width: 24,
@@ -123,7 +123,7 @@ function Header(props) {
       {props.backClicked && (
         <div className={classes.backButton}>
           <Button color={props.theme.palette.type === 'light' ? 'primary' : 'secondary'} onClick={props.backClicked} disableElevation>
-            <ArrowBackIcon fontSize={'large'} />
+            <ArrowBackIcon />
           </Button>
         </div>
       )}{' '}

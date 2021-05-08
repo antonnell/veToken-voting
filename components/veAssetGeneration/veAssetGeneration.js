@@ -122,7 +122,7 @@ export default function VeAssetGeneration(props) {
 
   return (
     <Paper elevation={1} className={classes.projectCardContainer}>
-      <Typography variant="h2">Generate {project && project.veTokenMetadata ? project.veTokenMetadata.symbol : 'veAsset'}</Typography>
+      <Typography variant="h2" className={ classes.sectionHeader }>Generate {project && project.veTokenMetadata ? project.veTokenMetadata.symbol : 'veAsset'}</Typography>
 
       <div className={classes.textField}>
         <div className={classes.inputTitleContainer}>

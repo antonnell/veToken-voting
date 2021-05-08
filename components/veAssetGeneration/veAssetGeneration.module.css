@@ -39,6 +39,10 @@
   margin: 24px -12px;
 }
 
+.sectionHeader {
+  padding-bottom: 24px;
+}
+
 .button {
   margin: 0px 12px !important;
 }

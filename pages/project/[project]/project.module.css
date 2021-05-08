@@ -11,3 +11,31 @@
   grid-gap: 48px;
   box-sizing: border-box;
 }
+
+@media screen and (max-width: 1600px) {
+
+  .projectContainer {
+    padding: 0 24px;
+  }
+  .projectCardContainer {
+    padding: 0 24px;
+    grid-gap: 24px;
+  }
+}
+
+@media screen and (max-width: 1400px) {
+  .projectCardContainer {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 1000px) {
+
+  .projectContainer {
+    padding: 0 12px;
+  }
+  .projectCardContainer {
+    padding: 0 12px;
+    grid-gap: 12px;
+  }
+}

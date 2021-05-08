@@ -80,7 +80,7 @@ export default function GaugeVoting({ project }) {
     <Paper elevation={1} className={classes.projectCardContainer}>
       <div className={classes.split}>
         <div className={classes.half}>
-          <Typography variant="h2">Vote for your gauge</Typography>
+          <Typography variant="h2" className={ classes.sectionHeader }>Vote for your gauge</Typography>
           <div className={classes.textField}>
             <div className={classes.inputTitleContainer}>
               <div className={classes.inputTitle}>
@@ -184,7 +184,7 @@ export default function GaugeVoting({ project }) {
           </div>
         </div>
         <div className={classes.half}>
-          <Typography variant="h2">Current Vote weighting</Typography>
+          <Typography variant="h2" className={ classes.sectionHeader }>Current Vote weighting</Typography>
           <PieChart data={project?.gauges?.sort((a, b) => (a.relativeWeight > b.relativeWeight ? -1 : 1))} />
         </div>
       </div>
