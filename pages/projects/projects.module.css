@@ -104,6 +104,16 @@
   padding-left: 30px;
 }
 
+.projectsLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 48px;
+}
+
+.projectsLoadingSpace {
+  margin-right: 24px;
+}
 
 
 @media screen and (max-width: 1700px) {

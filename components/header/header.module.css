@@ -2,7 +2,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 0px 48px;
+  padding: 0px 70px;
   height: 120px;
 }
 
@@ -47,4 +47,17 @@
 
 .backButton {
   flex: 1;
+}
+
+
+@media screen and (max-width: 1600px) {
+  .headerContainer {
+    padding: 0px 50px;
+  }
+}
+
+@media screen and (max-width: 1000px) {
+  .headerContainer {
+    padding: 0px 24px;
+  }
 }

@@ -38,18 +38,30 @@ class Store {
     this.emitter = emitter;
 
     this.store = {
+      configured: false,
       projects: [
         {
           id: 'curve',
-          name: 'curve',
+          name: 'curve.fi',
           logo: 'https://assets.coingecko.com/coins/images/12124/large/Curve.png',
-          url: 'curve.fi',
+          url: 'https://curve.fi',
           gaugeProxyAddress: '0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB',
           gauges: [],
           vaults: [],
           tokenMetadata: {},
           veTokenMetadata: {},
         },
+        // {
+        //   id: 'pickle',
+        //   name: 'Pickle.finance',
+        //   logo: 'https://assets.coingecko.com/coins/images/12435/large/pickle_finance_logo.jpg',
+        //   url: 'https://pickle.finance',
+        //   gaugeProxyAddress: '0x2e57627ACf6c1812F99e274d0ac61B786c19E74f',
+        //   gauges: [],
+        //   vaults: [],
+        //   tokenMetadata: {},
+        //   veTokenMetadata: {},
+        // },
       ],
     };
 
@@ -113,7 +125,7 @@ class Store {
           return;
         }
 
-        this.setStore({ projects: data });
+        this.setStore({ projects: data, configured: true });
 
         this.emitter.emit(GAUGES_CONFIGURED);
       },
@@ -243,11 +255,6 @@ class Store {
   };
 
   getProjects = async (payload) => {
-    const web3 = await stores.accountStore.getWeb3Provider();
-    if (!web3) {
-      return null;
-    }
-
     const projects = await this._getProjects();
 
     this.emitter.emit(PROJECTS_RETURNED, projects);
@@ -264,6 +271,12 @@ class Store {
   };
 
   getProject = async (payload) => {
+
+    const configured = this.getStore('configured')
+    if(!configured) {
+      return;
+    }
+
     const web3 = await stores.accountStore.getWeb3Provider();
     if (!web3) {
       return null;
@@ -283,6 +296,11 @@ class Store {
   };
 
   getTokenBalances = async (payload) => {
+    const configured = this.getStore('configured')
+    if(!configured) {
+      return;
+    }
+
     const web3 = await stores.accountStore.getWeb3Provider();
     if (!web3) {
       return null;
