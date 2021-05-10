@@ -21,7 +21,7 @@ import {
   VOTE_RETURNED
 } from './constants';
 
-import { ERC20_ABI, GAUGE_CONTROLLER_ABI, GAUGE_ABI, VOTING_ESCROW_ABI, PICKLE_GAUGE_CONTROLLER_ABI } from './abis';
+import { ERC20_ABI, GAUGE_CONTROLLER_ABI, GAUGE_ABI, VOTING_ESCROW_ABI, PICKLE_GAUGE_CONTROLLER_ABI, SUSHISWAP_LP_TOKEN_ABI, UNISWAP_LP_TOKEN_ABI, PICKLE_GAUGE_ABI } from './abis';
 
 import * as moment from 'moment';
 
@@ -197,11 +197,14 @@ class Store {
 
     const lpTokens = await Promise.all(lpTokensPromise);
 
+    const totalWeight = await gaugeControllerContract.methods.totalWeight().call();
+
     let projectGauges = [];
     for (let i = 0; i < gauges.length; i++) {
       const gauge = {
         address: gauges[i],
-        relativeWeight: BigNumber(gaugesRelativeWeights[i]).div(1e18).toNumber(),
+        weight: BigNumber(gaugesRelativeWeights[i]).div(1e18).toNumber(),
+        relativeWeight: BigNumber(gaugesRelativeWeights[i]).times(100).div(totalWeight).toNumber(),
         lpToken: {
           address: gaugesLPTokens[i],
           name: lpTokens[i * 3],
@@ -213,34 +216,93 @@ class Store {
       projectGauges.push(gauge);
     }
 
-    const totalWeight = await gaugeControllerContract.methods.totalWeight().call();
+    async.map(projectGauges, async (projectGauge, callbackInner) => {
+      try {
+        let pLPTokenContract, lpTokenContract, token0, token1, token0Contract, token1Contract, token0Symbol, token1Symbol, token
+        switch (projectGauge.lpToken.symbol) {
+          case 'pSLP':
+          case 'pUNI-V2':
+            pLPTokenContract = new web3.eth.Contract(PICKLE_GAUGE_ABI, projectGauge.lpToken.address);
 
-    const tokenAddress = await gaugeControllerContract.methods.PICKLE().call();
-    const tokenContract = new web3.eth.Contract(ERC20_ABI, tokenAddress);
+            token = await pLPTokenContract.methods.token().call()
 
-    const veTokenAddress = await gaugeControllerContract.methods.DILL().call();
-    const veTokenContract = new web3.eth.Contract(ERC20_ABI, veTokenAddress);
+            lpTokenContract = new web3.eth.Contract(SUSHISWAP_LP_TOKEN_ABI, token);
+            token0 = await lpTokenContract.methods.token0().call()
+            token1 = await lpTokenContract.methods.token1().call()
 
-    const projectTokenMetadata = {
-      address: web3.utils.toChecksumAddress(tokenAddress),
-      symbol: await tokenContract.methods.symbol().call(),
-      decimals: parseInt(await tokenContract.methods.decimals().call()),
-      logo: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${web3.utils.toChecksumAddress(tokenAddress)}/logo.png`,
-    };
+            token0Contract = new web3.eth.Contract(ERC20_ABI, token0);
+            token0Symbol = await token0Contract.methods.symbol().call()
 
-    const projectVeTokenMetadata = {
-      address: web3.utils.toChecksumAddress(veTokenAddress),
-      symbol: await veTokenContract.methods.symbol().call(),
-      decimals: parseInt(await veTokenContract.methods.decimals().call()),
-      logo: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${web3.utils.toChecksumAddress(veTokenAddress)}/logo.png`,
-    };
+            token1Contract = new web3.eth.Contract(ERC20_ABI, token1);
+            token1Symbol = await token1Contract.methods.symbol().call()
 
-    project.totalWeight = BigNumber(totalWeight).div(1e18).toNumber();
-    project.tokenMetadata = projectTokenMetadata;
-    project.veTokenMetadata = projectVeTokenMetadata;
-    project.gauges = projectGauges;
+            if(projectGauge.lpToken.symbol === 'pSLP') {
+              projectGauge.lpToken.symbol = `pSLP (${token0Symbol}/${token1Symbol})`
+            } else {
+              projectGauge.lpToken.symbol = `pUNI-V2 (${token0Symbol}/${token1Symbol})`
+            }
 
-    callback(null, project);
+            break;
+          case 'UNI-V2':
+            lpTokenContract = new web3.eth.Contract(UNISWAP_LP_TOKEN_ABI, projectGauge.lpToken.address);
+            token0 = await lpTokenContract.methods.token0().call()
+            token1 = await lpTokenContract.methods.token1().call()
+
+            token0Contract = new web3.eth.Contract(ERC20_ABI, token0);
+            token0Symbol = await token0Contract.methods.symbol().call()
+
+            token1Contract = new web3.eth.Contract(ERC20_ABI, token1);
+            token1Symbol = await token1Contract.methods.symbol().call()
+
+            projectGauge.lpToken.symbol = `UNI-V2 (${token0Symbol}/${token1Symbol})`
+
+            break;
+          case 'p3Crv':
+          case 'psteCRV':
+            break;
+          default:
+        }
+        callbackInner(null, projectGauge)
+      } catch(ex) {
+        console.log(projectGauge)
+        console.log(ex)
+        callbackInner(ex)
+      }
+    }, async (err, projectGauges) => {
+      if(err) {
+        callback(err)
+        return
+      }
+
+      const totalWeight = await gaugeControllerContract.methods.totalWeight().call();
+
+      const tokenAddress = await gaugeControllerContract.methods.PICKLE().call();
+      const tokenContract = new web3.eth.Contract(ERC20_ABI, tokenAddress);
+
+      const veTokenAddress = await gaugeControllerContract.methods.DILL().call();
+      const veTokenContract = new web3.eth.Contract(ERC20_ABI, veTokenAddress);
+
+      const projectTokenMetadata = {
+        address: web3.utils.toChecksumAddress(tokenAddress),
+        symbol: await tokenContract.methods.symbol().call(),
+        decimals: parseInt(await tokenContract.methods.decimals().call()),
+        logo: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${web3.utils.toChecksumAddress(tokenAddress)}/logo.png`,
+      };
+
+      const projectVeTokenMetadata = {
+        address: web3.utils.toChecksumAddress(veTokenAddress),
+        symbol: await veTokenContract.methods.symbol().call(),
+        decimals: parseInt(await veTokenContract.methods.decimals().call()),
+        logo: `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${web3.utils.toChecksumAddress(veTokenAddress)}/logo.png`,
+      };
+
+      project.totalWeight = BigNumber(totalWeight).div(1e18).toNumber();
+      project.tokenMetadata = projectTokenMetadata;
+      project.veTokenMetadata = projectVeTokenMetadata;
+      project.gauges = projectGauges;
+
+      callback(null, project);
+    })
   }
 
   _getProjectDataCurve = async (project, callback) => {
@@ -263,6 +325,15 @@ class Store {
     });
 
     const gauges = await Promise.all(gaugesPromises);
+
+    // get the gauge relative weights
+    const gaugesWeightsPromise = gauges.map((gauge) => {
+      return new Promise((resolve, reject) => {
+        resolve(gaugeControllerContract.methods.get_gauge_weight(gauge).call());
+      });
+    });
+
+    const gaugesWeights = await Promise.all(gaugesWeightsPromise);
 
     // get the gauge relative weights
     const gaugesRelativeWeightsPromise = gauges.map((gauge) => {
@@ -314,7 +385,8 @@ class Store {
     for (let i = 0; i < gauges.length; i++) {
       const gauge = {
         address: gauges[i],
-        relativeWeight: BigNumber(gaugesRelativeWeights[i]).div(1e18).toNumber(),
+        weight: BigNumber(gaugesWeights[i]).div(1e18).toNumber(),
+        relativeWeight: BigNumber(gaugesRelativeWeights[i]).times(100).div(1e18).toNumber(),
         lpToken: {
           address: gaugesLPTokens[i],
           name: lpTokens[i * 3],
@@ -462,6 +534,9 @@ class Store {
       });
 
       voteWeights = await Promise.all(gaugesVoteWeightsPromise);
+      voteWeights = voteWeights.map((weight) => {
+        return weight.power
+      })
 
     } else if (project.type === 'pickle') {
       // get the gauge vote weights for the user
@@ -476,9 +551,20 @@ class Store {
       voteWeights = await Promise.all(gaugesVoteWeightsPromise);
     }
 
+    // get the balanceOf for the user
+    const balanceOfPromise = project.gauges.map((gauge) => {
+      return new Promise((resolve, reject) => {
+        const erc20Contract = new web3.eth.Contract(ERC20_ABI, gauge.address);
+        resolve(erc20Contract.methods.balanceOf(account.address).call());
+      });
+    });
+
+    const balanceOf = await Promise.all(balanceOfPromise);
+
     let totalPercentUsed = 0
 
     for (let i = 0; i < project.gauges.length; i++) {
+      project.gauges[i].balance = BigNumber(balanceOf[i]).div(1e18).toNumber()
       const gaugeVotePercent = BigNumber(voteWeights[i]).div(100)
       project.gauges[i].userVotesPercent = gaugeVotePercent.toFixed(2)
       totalPercentUsed = BigNumber(totalPercentUsed).plus(gaugeVotePercent)

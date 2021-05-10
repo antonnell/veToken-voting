@@ -52,6 +52,12 @@ function stableSort(array, comparator) {
 const headCells = [
   { id: 'vault', numeric: false, disablePadding: false, label: 'Vault' },
   {
+    id: 'balance',
+    numeric: true,
+    disablePadding: false,
+    label: 'Your balance',
+  },
+  {
     id: 'relativeWeight',
     numeric: true,
     disablePadding: false,
@@ -266,17 +272,22 @@ export default function EnhancedTable({ project }) {
                 <TableRow key={labelId}>
                   <TableCell className={classes.cell}>
                     <Typography variant="h5" className={classes.textSpaced}>
-                      {row.lpToken.name}
+                      {row.lpToken.symbol}
                     </Typography>
                   </TableCell>
                   <TableCell className={classes.cell} align="right">
                     <Typography variant="h5" className={classes.textSpaced}>
-                      {formatCurrency(row.relativeWeight)}
+                      {formatCurrency(row.balance)}
                     </Typography>
                   </TableCell>
                   <TableCell className={classes.cell} align="right">
                     <Typography variant="h5" className={classes.textSpaced}>
-                      {formatCurrency(row.relativeWeight*100/project.totalWeight)} %
+                      {formatCurrency(row.weight)}
+                    </Typography>
+                  </TableCell>
+                  <TableCell className={classes.cell} align="right">
+                    <Typography variant="h5" className={classes.textSpaced}>
+                      {formatCurrency(row.relativeWeight)} %
                     </Typography>
                   </TableCell>
                 </TableRow>
