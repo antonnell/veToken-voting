@@ -49,7 +49,7 @@ function Projects({ changeTheme, theme }) {
           <div className={ classes.copyCentered }>
             <Typography variant='h1' className={ classes.chainListSpacing }><span className={ classes.helpingUnderline }>veToken</span></Typography>
             <Typography variant='h2' className={ classes.helpingParagraph }>Helping emission based projects upgrade to vesting escrow assets</Typography>
-            <Typography className={classes.subTitle}>Some interesting information about what this site does. Just select the project from the list to start maximising your rewards.</Typography>
+            <Typography className={classes.subTitle}>Select the project from the list to start maximising your rewards for your favourite project.</Typography>
           </div>
           <div className={ classes.socials }>
             <a className={ `${classes.socialButton}` } href='https://github.com/antonnell/veToken-voting' target='_blank' rel="noopener noreferrer" >
