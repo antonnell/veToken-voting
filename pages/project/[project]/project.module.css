@@ -20,6 +20,22 @@
   height: max-content;
 }
 
+.accountButton {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  margin-top: 40px !important;
+}
+
+.connectWallet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 90%;
+  height: calc(100vh - 240px);
+}
+
 @media screen and (max-width: 1600px) {
 
   .projectContainer {
