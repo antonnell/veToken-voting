@@ -52,29 +52,17 @@ function stableSort(array, comparator) {
 const headCells = [
   { id: 'vault', numeric: false, disablePadding: false, label: 'Vault' },
   {
-    id: 'votes',
+    id: 'relativeWeight',
     numeric: true,
     disablePadding: false,
     label: 'Votes',
   },
   {
-    id: 'votes',
+    id: 'relativeWeight',
     numeric: true,
     disablePadding: false,
     label: 'Percent',
-  },
-  {
-    id: 'apy',
-    numeric: true,
-    disablePadding: false,
-    label: 'Current APY',
-  },
-  {
-    id: 'apy',
-    numeric: true,
-    disablePadding: false,
-    label: 'Future APY',
-  },
+  }
 ];
 
 function EnhancedTableHead(props) {
@@ -134,9 +122,6 @@ const useStyles = makeStyles((theme) => ({
   paper: {
     width: '100%',
     marginBottom: theme.spacing(2),
-  },
-  table: {
-    minWidth: 750,
   },
   visuallyHidden: {
     border: 0,
@@ -239,7 +224,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function EnhancedTable({ gauges }) {
+export default function EnhancedTable({ project }) {
   const classes = useStyles();
   const [order, setOrder] = React.useState('desc');
   const [orderBy, setOrderBy] = React.useState('balance');
@@ -252,7 +237,7 @@ export default function EnhancedTable({ gauges }) {
     setOrderBy(property);
   };
 
-  if (!gauges) {
+  if (!project || !project.gauges) {
     return (
       <div className={classes.root}>
         <Skeleton variant="rect" width={'100%'} height={40} className={classes.skelly1} />
@@ -269,9 +254,9 @@ export default function EnhancedTable({ gauges }) {
     <div className={classes.root}>
       <TableContainer>
         <Table className={classes.table} aria-labelledby="tableTitle" size={'medium'} aria-label="enhanced table">
-          <EnhancedTableHead classes={classes} order={order} orderBy={orderBy} onRequestSort={handleRequestSort} rowCount={gauges.length} />
+          <EnhancedTableHead classes={classes} order={order} orderBy={orderBy} onRequestSort={handleRequestSort} rowCount={project?.gauges.length} />
           <TableBody>
-            {stableSort(gauges, getComparator(order, orderBy)).map((row, index) => {
+            {stableSort(project?.gauges, getComparator(order, orderBy)).map((row, index) => {
               if (!row) {
                 return null;
               }
@@ -280,43 +265,18 @@ export default function EnhancedTable({ gauges }) {
               return (
                 <TableRow key={labelId}>
                   <TableCell className={classes.cell}>
-                    <div className={classes.inline}>
-                      <img
-                        src={`${row.logo ? row.logo : '/tokens/unknown-logo.png'}`}
-                        width={30}
-                        height={30}
-                        alt=""
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = '/tokens/unknown-logo.png';
-                        }}
-                        className={classes.icon}
-                      />
-                      <div className={classes.aligntRight}>
-                        <Typography variant="h5" className={classes.textSpaced}>
-                          {row.name}
-                        </Typography>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className={classes.cell} align="right">
                     <Typography variant="h5" className={classes.textSpaced}>
-                      {formatCurrency(100)}
+                      {row.lpToken.name}
                     </Typography>
                   </TableCell>
                   <TableCell className={classes.cell} align="right">
                     <Typography variant="h5" className={classes.textSpaced}>
-                      {formatCurrency(100)} %
+                      {formatCurrency(row.relativeWeight)}
                     </Typography>
                   </TableCell>
                   <TableCell className={classes.cell} align="right">
                     <Typography variant="h5" className={classes.textSpaced}>
-                      {formatCurrency(50)} %
-                    </Typography>
-                  </TableCell>
-                  <TableCell className={classes.cell} align="right">
-                    <Typography variant="h5" className={classes.textSpaced}>
-                      {formatCurrency(50)} %
+                      {formatCurrency(row.relativeWeight*100/project.totalWeight)} %
                     </Typography>
                   </TableCell>
                 </TableRow>

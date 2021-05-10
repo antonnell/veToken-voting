@@ -98,7 +98,6 @@ export default function GaugeVoting({ project }) {
               fullWidth={true}
               renderOption={(option, { selected }) => (
                 <React.Fragment>
-                  <img src={option.logo} alt="" width={30} height={30} style={{ marginRight: '10px' }} />
                   <div className={classes.text}>{option.lpToken.symbol}</div>
                 </React.Fragment>
               )}
@@ -108,12 +107,7 @@ export default function GaugeVoting({ project }) {
                   InputProps={{
                     ...params.InputProps,
                     ...{
-                      placeholder: 'Search for gauge',
-                      startAdornment: gauge && (
-                        <InputAdornment position="start">
-                          <img src={gauge?.logo} alt="" width={30} height={30} />
-                        </InputAdornment>
-                      ),
+                      placeholder: 'Search gauge'
                     },
                   }}
                   variant="outlined"
@@ -154,41 +148,50 @@ export default function GaugeVoting({ project }) {
               </Typography>
             </div>
           </div>
-          <div className={classes.gaugeVotesTable}>
-            {project?.gauges?.map((gauge) => {
-              if (!gauge.userVotesPercent || (gauge.userVotesPercent && BigNumber(gauge.userVotesPercent).eq(0))) {
-                return null;
-              }
+          {
+            BigNumber(project?.userVotesPercent).gt(0) &&
+            (<div className={classes.gaugeVotesTable}>
+              {project?.gauges?.map((gauge) => {
+                if (!gauge.userVotesPercent || (gauge.userVotesPercent && BigNumber(gauge.userVotesPercent).eq(0))) {
+                  return null;
+                }
 
-              return (
-                <div className={classes.calculationResult}>
-                  <Typography variant="h5">{gauge.lpToken.name}</Typography>
-                  <Typography variant="h5" className={classes.bold}>
-                    {formatCurrency(gauge.userVotesPercent)} %
-                  </Typography>
-                  <Button
-                    disableElevation
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    onClick={() => {
-                      onReset(gauge);
-                    }}
-                    disabled={resetLoading}
-                  >
-                    <Typography variant="h5">{resetLoading ? <CircularProgress size={15} /> : 'Reset'}</Typography>
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
+                return (
+                  <div className={classes.calculationResult}>
+                    <Typography variant="h5">{gauge.lpToken.name}</Typography>
+                    <Typography variant="h5" className={classes.bold}>
+                      {formatCurrency(gauge.userVotesPercent)} %
+                    </Typography>
+                    <Button
+                      disableElevation
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      onClick={() => {
+                        onReset(gauge);
+                      }}
+                      disabled={resetLoading}
+                    >
+                      <Typography variant="h5">{resetLoading ? <CircularProgress size={15} /> : 'Reset'}</Typography>
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>)
+          }
+          {
+            BigNumber(project?.userVotesPercent).eq(0) &&
+            (<div className={classes.gaugeVotesTable}>
+              <Typography>Voting for a gauge increases the emissions that the farm receives. The more votes that your farm receives, the more profitable it will be.</Typography>
+            </div>)
+          }
         </div>
         <div className={classes.half}>
           <Typography variant="h2" className={ classes.sectionHeader }>Current Vote weighting</Typography>
           <PieChart data={project?.gauges?.sort((a, b) => (a.relativeWeight > b.relativeWeight ? -1 : 1))} />
         </div>
       </div>
-      <div>{/* <GaugeVotesTable gauges={ project?.gauges } /> */}</div>
+      <div><GaugeVotesTable project={ project } /></div>
     </Paper>
   );
 }

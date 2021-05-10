@@ -61,7 +61,6 @@ export default class Example extends PureComponent {
   };
 
   render() {
-    console.log(this.props)
     return (
       <ResponsiveContainer width="100%" height={400}>
         <PieChart width={400} height={400}>
