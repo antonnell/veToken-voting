@@ -151,13 +151,13 @@ export default function GaugeVoting({ project }) {
           {
             BigNumber(project?.userVotesPercent).gt(0) &&
             (<div className={classes.gaugeVotesTable}>
-              {project?.gauges?.map((gauge) => {
+              {project?.gauges?.map((gauge, idx) => {
                 if (!gauge.userVotesPercent || (gauge.userVotesPercent && BigNumber(gauge.userVotesPercent).eq(0))) {
                   return null;
                 }
 
                 return (
-                  <div className={classes.calculationResult}>
+                  <div className={classes.calculationResult} key={'gauge'+idx}>
                     <Typography variant="h5">{gauge.lpToken.name}</Typography>
                     <Typography variant="h5" className={classes.bold}>
                       {formatCurrency(gauge.userVotesPercent)} %

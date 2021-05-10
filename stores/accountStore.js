@@ -82,27 +82,32 @@ class Store {
     this.getGasPrices();
     this.getCurrentBlock();
 
-    injected.isAuthorized().then(isAuthorized => {
-      if (isAuthorized) {
-        injected
-          .activate()
-          .then(a => {
-            this.setStore({
-              account: { address: a.account },
-              web3context: { library: { provider: a.provider } }
+    injected.isAuthorized()
+      .then(isAuthorized => {
+        if (isAuthorized) {
+          injected
+            .activate()
+            .then(a => {
+              this.setStore({
+                account: { address: a.account },
+                web3context: { library: { provider: a.provider } }
+              });
+              this.emitter.emit(CONFIGURE_RETURNED);
+              this.dispatcher.dispatch({ type: CONFIGURE_GAUGES });
+            })
+            .catch(e => {
+              this.emitter.emit(ERROR, e);
+              this.emitter.emit(CONFIGURE_RETURNED);
             });
-            this.emitter.emit(CONFIGURE_RETURNED);
-            this.dispatcher.dispatch({ type: CONFIGURE_GAUGES });
-          })
-          .catch(e => {
-            this.emitter.emit(ERROR, e);
-            this.emitter.emit(CONFIGURE_RETURNED);
-          });
-      } else {
-        //we can ignore if not authorized.
+        } else {
+          //we can ignore if not authorized.
+          this.emitter.emit(CONFIGURE_RETURNED);
+        }
+      })
+      .catch(e => {
+        this.emitter.emit(ERROR, e);
         this.emitter.emit(CONFIGURE_RETURNED);
-      }
-    });
+      });
 
     if (window.ethereum) {
       this.updateAccount();
@@ -187,23 +192,28 @@ class Store {
   };
 
   getWeb3Provider = async () => {
-    let web3context = this.getStore("web3context");
-    let provider = null;
+    try {
+      let web3context = this.getStore("web3context");
+      let provider = null;
 
-    // if (!web3context) {
-    //   provider = network.providers["1"];
-    // } else {
-    //   provider = web3context.library.provider;
-    // }
+      // if (!web3context) {
+      //   provider = network.providers["1"];
+      // } else {
+      //   provider = web3context.library.provider;
+      // }
 
-    if(web3context && web3context.library) {
-      provider = web3context.library.provider;
+      if(web3context && web3context.library) {
+        provider = web3context.library.provider;
+      }
+
+      if (!provider) {
+        return null;
+      }
+      return new Web3(provider);
+    } catch(ex) {
+      console.log(ex)
+      return null
     }
-
-    if (!provider) {
-      return null;
-    }
-    return new Web3(provider);
   };
 }
 
