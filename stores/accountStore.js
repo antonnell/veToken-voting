@@ -204,6 +204,8 @@ class Store {
 
       if(web3context && web3context.library) {
         provider = web3context.library.provider;
+      } else {
+        provider = network.providers['1'];
       }
 
       if (!provider) {

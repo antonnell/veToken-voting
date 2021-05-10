@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Typography, Paper, Grid } from '@material-ui/core';
 import Skeleton from '@material-ui/lab/Skeleton';
 import BigNumber from 'bignumber.js';
@@ -5,13 +6,41 @@ import { useRouter } from 'next/router';
 import { formatCurrency } from '../../utils';
 
 import classes from './projectCard.module.css';
+import stores from '../../stores/index.js';
+
+import { CONFIGURE_RETURNED, CONNECT_WALLET } from '../../stores/constants';
+
 
 export default function ProjectCard({ project }) {
   const router = useRouter();
 
-  function handleNavigate() {
-    router.push('/project/' + project.id);
+  const [account, setAccount] = useState(null);
+
+  const handleNavigate = () => {
+    if(account && account.address) {
+      router.push('/project/' + project.id);
+    } else {
+      callConnect()
+    }
   }
+
+  const callConnect = () => {
+    stores.emitter.emit(CONNECT_WALLET)
+  }
+
+  useEffect(function () {
+    const accountConfigured = () => {
+      setAccount(stores.accountStore.getStore('account'))
+    }
+
+    stores.emitter.on(CONFIGURE_RETURNED, accountConfigured)
+
+    setAccount(stores.accountStore.getStore('account'))
+
+    return () => {
+      stores.emitter.removeListener(CONFIGURE_RETURNED, accountConfigured)
+    };
+  }, []);
 
   return (
     <Paper elevation={ 1 } className={classes.projectCardContainer} onClick={handleNavigate}>

@@ -88,7 +88,6 @@ function Projects({ changeTheme }) {
     <Layout changeTheme={changeTheme} backClicked={backClicked}>
       <Header changeTheme={changeTheme} backClicked={backClicked} />
 
-      { account &&
         <div className={classes.projectContainer}>
           <Balances project={project} />
           <div className={classes.projectCardContainer}>
@@ -104,15 +103,7 @@ function Projects({ changeTheme }) {
             <GaugeVoting project={project} />
           </div>
         </div>
-      }
-      { !account &&
-        <div className={ classes.connectWallet}>
-          <Typography variant='h2'>Please connect your wallet to continue.</Typography>
-          <Button disableElevation className={classes.accountButton} variant="contained" color="primary" onClick={callConnect}>
-            <Typography variant="h5">Connect Wallet</Typography>
-          </Button>
-        </div>
-      }
+
       <Footer />
     </Layout>
   );

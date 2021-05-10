@@ -119,11 +119,6 @@ class Store {
   };
 
   configure = async (payload) => {
-    const web3 = await stores.accountStore.getWeb3Provider();
-    if (!web3) {
-      return null;
-    }
-
     const projects = this.getStore('projects');
 
     async.map(
