@@ -1,0 +1,24 @@
+.footerContainer {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 48px;
+}
+
+.socials {
+  padding: 24px;
+}
+
+.socialButton {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.sourceCode {
+  padding-left: 6px;
+  text-decoration: none;
+}
+
+.version {
+  padding-left: 30px;
+}

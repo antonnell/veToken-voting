@@ -8,9 +8,13 @@ import Layout from '../../../components/layout/layout.js';
 import Balances from '../../../components/balances';
 import GaugeCalculator from '../../../components/gaugeCalculator';
 import VeAssetGeneration from '../../../components/veAssetGeneration';
+import VeAssetModificationAmount from '../../../components/veAssetModificationAmount';
+import VeAssetModificationDuration from '../../../components/veAssetModificationDuration';
 import GaugeVoting from '../../../components/gaugeVoting';
 import Header from '../../../components/header';
+import Footer from '../../../components/footer';
 
+import BigNumber from 'bignumber.js';
 import classes from './project.module.css';
 
 import stores from '../../../stores/index.js';
@@ -73,10 +77,19 @@ function Projects({ changeTheme }) {
       <div className={classes.projectContainer}>
         <Balances project={project} />
         <div className={classes.projectCardContainer}>
-          <VeAssetGeneration project={project} />
+          { (project && project.veTokenMetadata && BigNumber(project.veTokenMetadata.userLocked).gt(0)) &&
+            <div className={ classes.fakeGrid }>
+              <VeAssetModificationAmount project={project} />
+              <VeAssetModificationDuration project={project} />
+            </div>
+          }
+          { !(project && project.veTokenMetadata && BigNumber(project.veTokenMetadata.userLocked).gt(0)) &&
+            <VeAssetGeneration project={project} />
+          }
           <GaugeVoting project={project} />
         </div>
       </div>
+      <Footer />
     </Layout>
   );
 }

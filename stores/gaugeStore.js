@@ -18,7 +18,11 @@ import {
   APPROVE_LOCK,
   APPROVE_LOCK_RETURNED,
   VOTE,
-  VOTE_RETURNED
+  VOTE_RETURNED,
+  INCREASE_LOCK_AMOUNT,
+  INCREASE_LOCK_AMOUNT_RETURNED,
+  INCREASE_LOCK_DURATION,
+  INCREASE_LOCK_DURATION_RETURNED
 } from './constants';
 
 import { ERC20_ABI, GAUGE_CONTROLLER_ABI, GAUGE_ABI, VOTING_ESCROW_ABI, PICKLE_GAUGE_CONTROLLER_ABI, SUSHISWAP_LP_TOKEN_ABI, UNISWAP_LP_TOKEN_ABI, PICKLE_GAUGE_ABI } from './abis';
@@ -90,6 +94,12 @@ class Store {
             break;
           case VOTE:
             this.vote(payload);
+            break;
+          case INCREASE_LOCK_AMOUNT:
+            this.increaseLockAmount(payload);
+            break;
+          case INCREASE_LOCK_DURATION:
+            this.increaseLockDuration(payload);
             break;
           default: {
           }
@@ -500,9 +510,10 @@ class Store {
     const allowance = await tokenContract.methods.allowance(account.address, project.veTokenMetadata.address).call();
     const totalLocked = await tokenContract.methods.balanceOf(project.veTokenMetadata.address).call();
 
-    const veTokenContract = new web3.eth.Contract(ERC20_ABI, project.veTokenMetadata.address);
+    const veTokenContract = new web3.eth.Contract(VOTING_ESCROW_ABI, project.veTokenMetadata.address);
     const veTokenBalance = await veTokenContract.methods.balanceOf(account.address).call();
     const totalSupply = await veTokenContract.methods.totalSupply().call();
+    const userLocked = await veTokenContract.methods.locked(account.address).call();
 
     project.tokenMetadata.balance = BigNumber(tokenBalance)
       .div(10 ** project.tokenMetadata.decimals)
@@ -513,12 +524,17 @@ class Store {
     project.tokenMetadata.totalLocked = BigNumber(totalLocked)
       .div(10 ** project.tokenMetadata.decimals)
       .toFixed(project.tokenMetadata.decimals);
+
     project.veTokenMetadata.balance = BigNumber(veTokenBalance)
       .div(10 ** project.veTokenMetadata.decimals)
       .toFixed(project.veTokenMetadata.decimals);
     project.veTokenMetadata.totalSupply = BigNumber(totalSupply)
       .div(10 ** project.veTokenMetadata.decimals)
       .toFixed(project.veTokenMetadata.decimals);
+    project.veTokenMetadata.userLocked = BigNumber(userLocked.amount)
+      .div(10 ** project.veTokenMetadata.decimals)
+      .toFixed(project.veTokenMetadata.decimals);
+    project.veTokenMetadata.userLockEnd = userLocked.end;
 
     let gaugeControllerContract = null
     let voteWeights = []
@@ -700,6 +716,73 @@ class Store {
     console.log([gaugeAddress, amountToSend])
 
     this._callContractWait(web3, gaugeControllerContract, 'vote_for_gauge_weights', [gaugeAddress, amountToSend], account, gasPrice, GET_TOKEN_BALANCES, { id: project.id }, callback);
+  };
+
+  increaseLockAmount = async (payload) => {
+    const account = stores.accountStore.getStore('account');
+    if (!account) {
+      return false;
+      //maybe throw an error
+    }
+
+    const web3 = await stores.accountStore.getWeb3Provider();
+    if (!web3) {
+      return false;
+      //maybe throw an error
+    }
+
+    const { amount, project } = payload.content;
+
+    this._callIncreaseAmount(web3, project, account, amount, (err, lockResult) => {
+      if (err) {
+        return this.emitter.emit(ERROR, err);
+      }
+
+      return this.emitter.emit(INCREASE_LOCK_AMOUNT_RETURNED, lockResult);
+    });
+  };
+
+  _callIncreaseAmount = async (web3, project, account, amount, callback) => {
+    const escrowContract = new web3.eth.Contract(VOTING_ESCROW_ABI, project.veTokenMetadata.address);
+
+    const amountToSend = BigNumber(amount)
+      .times(10 ** project.tokenMetadata.decimals)
+      .toFixed(0);
+
+    const gasPrice = await stores.accountStore.getGasPrice('fast');
+
+    this._callContractWait(web3, escrowContract, 'increase_amount', [amountToSend], account, gasPrice, GET_TOKEN_BALANCES, { id: project.id }, callback);
+  };
+
+  increaseLockDuration = async (payload) => {
+    const account = stores.accountStore.getStore('account');
+    if (!account) {
+      return false;
+      //maybe throw an error
+    }
+
+    const web3 = await stores.accountStore.getWeb3Provider();
+    if (!web3) {
+      return false;
+      //maybe throw an error
+    }
+
+    const { selectedDate, project } = payload.content;
+
+    this._callIncreaseUnlockTime(web3, project, account, selectedDate, (err, lockResult) => {
+      if (err) {
+        return this.emitter.emit(ERROR, err);
+      }
+
+      return this.emitter.emit(INCREASE_LOCK_DURATION_RETURNED, lockResult);
+    });
+  };
+
+  _callIncreaseUnlockTime = async (web3, project, account, selectedDate, callback) => {
+    const escrowContract = new web3.eth.Contract(VOTING_ESCROW_ABI, project.veTokenMetadata.address);
+    const gasPrice = await stores.accountStore.getGasPrice('fast');
+
+    this._callContractWait(web3, escrowContract, 'increase_unlock_time', [selectedDate], account, gasPrice, GET_TOKEN_BALANCES, { id: project.id }, callback);
   };
 
   _callContract = (web3, contract, method, params, account, gasPrice, dispatchEvent, dispatchEventPayload, callback) => {

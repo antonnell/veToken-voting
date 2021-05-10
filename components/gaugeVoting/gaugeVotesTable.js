@@ -64,7 +64,7 @@ const headCells = [
     label: 'Votes',
   },
   {
-    id: 'relativeWeight',
+    id: 'relativeWeightPercent',
     numeric: true,
     disablePadding: false,
     label: 'Percent',

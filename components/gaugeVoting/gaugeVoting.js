@@ -17,7 +17,7 @@ export default function GaugeVoting({ project }) {
   const [amount, setAmount] = useState(0);
   const [amountError, setAmountError] = useState(false);
   const [gauge, setGauge] = useState(null);
-  const [gaugeError, setGaugeError] = useState(null);
+  const [gaugeError, setGaugeError] = useState(false);
 
   const [voteLoading, setVoteLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);

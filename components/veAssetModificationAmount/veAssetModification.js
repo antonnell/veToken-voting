@@ -6,9 +6,9 @@ import { formatCurrency } from '../../utils';
 import moment from 'moment';
 
 import stores from '../../stores/index.js';
-import { ERROR, LOCK, LOCK_RETURNED, APPROVE_LOCK, APPROVE_LOCK_RETURNED } from '../../stores/constants';
+import { ERROR, INCREASE_LOCK_AMOUNT, INCREASE_LOCK_AMOUNT_RETURNED, APPROVE_LOCK, APPROVE_LOCK_RETURNED } from '../../stores/constants';
 
-import classes from './veAssetGeneration.module.css';
+import classes from './veAssetModification.module.css';
 
 export default function VeAssetGeneration(props) {
   const [approveLoading, setApproveLoading] = useState(false);
@@ -16,9 +16,6 @@ export default function VeAssetGeneration(props) {
 
   const [amount, setAmount] = useState('');
   const [amountError, setAmountError] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedDateError, setSelectedDateError] = useState(false);
-  const [selectedValue, setSelectedValue] = useState('week');
   const [project, setProject] = useState(null);
 
   useEffect(function () {
@@ -27,12 +24,12 @@ export default function VeAssetGeneration(props) {
       setApproveLoading(false);
     };
 
-    stores.emitter.on(LOCK_RETURNED, lockReturned);
+    stores.emitter.on(INCREASE_LOCK_AMOUNT_RETURNED, lockReturned);
     stores.emitter.on(APPROVE_LOCK_RETURNED, lockReturned);
     stores.emitter.on(ERROR, lockReturned);
 
     return () => {
-      stores.emitter.removeListener(LOCK_RETURNED, lockReturned);
+      stores.emitter.removeListener(INCREASE_LOCK_AMOUNT_RETURNED, lockReturned);
       stores.emitter.removeListener(APPROVE_LOCK_RETURNED, lockReturned);
       stores.emitter.removeListener(ERROR, lockReturned);
     };
@@ -46,35 +43,6 @@ export default function VeAssetGeneration(props) {
     setAmount(BigNumber(project.tokenMetadata.balance).times(percent).div(100).toFixed(project.tokenMetadata.decimals));
   };
 
-  const handleDateChange = (event) => {
-    setSelectedDate(event.target.value);
-    setSelectedValue(null);
-  };
-
-  const handleChange = (event) => {
-    setSelectedValue(event.target.value);
-
-    let days = 0;
-    switch (event.target.value) {
-      case 'week':
-        days = 7;
-        break;
-      case 'month':
-        days = 30;
-        break;
-      case 'year':
-        days = 365;
-        break;
-      case 'years':
-        days = 1461;
-        break;
-      default:
-    }
-    const newDate = moment().add(days, 'days').format('YYYY-MM-DD');
-
-    setSelectedDate(newDate);
-  };
-
   const updateProject = () => {
     setProject(props.project);
   };
@@ -83,13 +51,8 @@ export default function VeAssetGeneration(props) {
 
   const onLock = () => {
     setAmountError(false);
-    setSelectedDateError(false);
     let error = false;
 
-    if (!selectedDate) {
-      setSelectedDateError(true);
-      error = true;
-    }
     if (!amount || amount === '') {
       setAmountError(true);
       error = true;
@@ -98,9 +61,7 @@ export default function VeAssetGeneration(props) {
     if (!error) {
       setLockLoading(true);
 
-      const selectedDateUnix = moment(selectedDate).unix()
-
-      stores.dispatcher.dispatch({ type: LOCK, content: { selectedDate: selectedDateUnix, amount, project } });
+      stores.dispatcher.dispatch({ type: INCREASE_LOCK_AMOUNT, content: { amount, project } });
     }
   };
 
@@ -122,8 +83,7 @@ export default function VeAssetGeneration(props) {
 
   return (
     <Paper elevation={1} className={classes.projectCardContainer}>
-      <Typography variant="h2" className={ classes.sectionHeader }>Generate {project && project.veTokenMetadata ? project.veTokenMetadata.symbol : 'veAsset'}</Typography>
-
+      <Typography variant="h2" className={ classes.sectionHeader }>Lock additional {project && project.tokenMetadata ? project.tokenMetadata.symbol : 'asset'}</Typography>
       <div className={classes.textField}>
         <div className={classes.inputTitleContainer}>
           <div className={classes.inputTitle}>
@@ -161,44 +121,6 @@ export default function VeAssetGeneration(props) {
             ),
           }}
         />
-      </div>
-
-      <div className={classes.textField}>
-        <div className={classes.inputTitleContainer}>
-          <div className={classes.inputTitle}>
-            <Typography variant="h5" noWrap>
-              Lock until
-            </Typography>
-          </div>
-        </div>
-        <TextField
-          fullWidth
-          id="date"
-          type="date"
-          variant="outlined"
-          className={classes.textField}
-          onChange={handleDateChange}
-          value={selectedDate}
-          error={selectedDateError}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-      </div>
-      <div className={classes.textField}>
-        <div className={classes.inputTitleContainer}>
-          <div className={classes.inputTitle}>
-            <Typography variant="h5" noWrap>
-              Lock for
-            </Typography>
-          </div>
-        </div>
-        <RadioGroup row aria-label="position" name="position" onChange={handleChange} value={selectedValue}>
-          <FormControlLabel value="week" control={<Radio color="primary" />} label="1 week" labelPlacement="bottom" />
-          <FormControlLabel value="month" control={<Radio color="primary" />} label="1 month" labelPlacement="bottom" />
-          <FormControlLabel value="year" control={<Radio color="primary" />} label="1 year" labelPlacement="bottom" />
-          <FormControlLabel value="years" control={<Radio color="primary" />} label="4 years" labelPlacement="bottom" />
-        </RadioGroup>
       </div>
       <div className={classes.actionButton}>
         <Button
