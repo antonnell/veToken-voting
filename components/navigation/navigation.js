@@ -337,7 +337,7 @@ function Navigation(props) {
           </svg>
         </a>
       </div>
-      <Typography className={classes.smallVersion}>Version 0.1.0</Typography>
+      <Typography className={classes.smallVersion}>Version 0.1.1</Typography>
     </Paper>
   );
 }

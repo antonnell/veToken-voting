@@ -1,6 +1,7 @@
 import async from "async";
 import {
   GAS_PRICE_API,
+  ZAPPER_GAS_PRICE_API,
   ERROR,
   STORE_UPDATED,
   CONFIGURE,
@@ -147,7 +148,7 @@ class Store {
     const gasPrices = await this._getGasPrices();
     let gasSpeed = localStorage.getItem("yearn.finance-gas-speed");
 
-    if (!gasSpeed) {
+    if (!gasSpeed || gasSpeed === 'slow') {
       gasSpeed = "fast";
       localStorage.getItem("yearn.finance-gas-speed", "fast");
     }
@@ -158,7 +159,7 @@ class Store {
 
   _getGasPrices = async () => {
     try {
-      const url = GAS_PRICE_API;
+      const url = ZAPPER_GAS_PRICE_API;
       const priceResponse = await fetch(url);
       const priceJSON = await priceResponse.json();
 
@@ -178,7 +179,7 @@ class Store {
     }
 
     try {
-      const url = GAS_PRICE_API;
+      const url = ZAPPER_GAS_PRICE_API;
       const priceResponse = await fetch(url);
       const priceJSON = await priceResponse.json();
 

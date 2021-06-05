@@ -12,7 +12,7 @@ function Footer(props) {
           </svg>
           <Typography variant='body1' className={ classes.sourceCode }>View Source Code</Typography>
         </a>
-        <Typography variant='subtitle1' className={ classes.version }>Version 0.1.0</Typography>
+        <Typography variant='subtitle1' className={ classes.version }>Version 0.1.1</Typography>
       </div>
     </div>
   );
